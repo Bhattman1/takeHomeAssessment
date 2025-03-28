@@ -7,6 +7,7 @@ export default function CustomVideoPlayer() {
   const [showProgressBar, setShowProgressBar] = useState(true);
   const [videoId, setVideoId] = useState('dQw4w9WgXcQ'); // Default YouTube video ID
   const [inputVideoId, setInputVideoId] = useState('');
+  const [showTip, setShowTip] = useState(true); // State to control the tip visibility
   const playerRef = useRef(null);
   const buttonRef = useRef(null);
   const [player, setPlayer] = useState(null);
@@ -87,6 +88,12 @@ export default function CustomVideoPlayer() {
           e.preventDefault();
           e.stopPropagation();
           toggleProgressBar(e);
+          
+          // Hide the tip when the button is clicked
+          if (showTip) {
+            setShowTip(false);
+          }
+          
           return false;
         }
       };
@@ -112,7 +119,7 @@ export default function CustomVideoPlayer() {
         document.removeEventListener('click', documentClickHandler);
       };
     }
-  }, [playerReady]);
+  }, [playerReady, showTip]);
 
   // When showProgressBar changes, update visibility
   useEffect(() => {
@@ -272,6 +279,18 @@ export default function CustomVideoPlayer() {
             <div ref={playerRef} className="absolute top-0 left-0 w-full h-full">
               <div id="player" data-plyr-provider="youtube" data-plyr-embed-id={videoId}></div>
             </div>
+            
+            {/* Onboarding tip that points to the eye button */}
+            {showTip && playerReady && (
+              <div className="onboarding-tip">
+                <div className="tip-content">
+                  <p>Click this button to hide the progress bar</p>
+                  <svg className="arrow" viewBox="0 0 50 50" width="40" height="40">
+                    <path d="M10,10 L30,25 L10,40" />
+                  </svg>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         
@@ -393,6 +412,77 @@ export default function CustomVideoPlayer() {
           flex-grow: 0;
           width: 0;
           display: none;
+        }
+        
+        /* Onboarding tip styling */
+        .onboarding-tip {
+          position: absolute;
+          bottom: -10px; /* Increased from 6px to move it down */
+          right: 80px;
+          z-index: 100;
+          pointer-events: none;
+          animation: fadeIn 0.5s ease-out;
+        }
+        
+        .tip-content {
+          display: flex;
+          align-items: center;
+          background: rgba(0, 0, 0, 0.7);
+          color: white;
+          font-size: 14px;
+          padding: 8px 14px;
+          border-radius: 6px;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+          max-width: 180px;
+        }
+        
+        .tip-content p {
+          margin: 0;
+          padding: 0;
+          line-height: 1.4;
+        }
+        
+        .arrow {
+          fill: none;
+          stroke: white;
+          stroke-width: 3;
+          margin-left: 10px;
+          animation: pointRight 1.5s infinite ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pointRight {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(5px); }
+        }
+        
+        /* Make the tip responsive */
+        @media (max-width: 640px) {
+          .onboarding-tip {
+            bottom: 50px; /* Increased from 40px to move it down on mobile */
+            right: 20px;
+          }
+          
+          .tip-content {
+            font-size: 12px;
+            padding: 6px 10px;
+            flex-direction: column;
+          }
+          
+          .arrow {
+            margin-left: 0;
+            margin-top: 8px;
+            transform: rotate(90deg);
+          }
+          
+          @keyframes pointRight {
+            0%, 100% { transform: rotate(90deg) translateX(0); }
+            50% { transform: rotate(90deg) translateX(5px); }
+          }
         }
       `}</style>
     </>
