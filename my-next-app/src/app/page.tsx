@@ -7,7 +7,7 @@ import Script from 'next/script';
 
 export default function CustomVideoPlayer() {
   const [showProgressBar, setShowProgressBar] = useState(true);
-  const [videoId, setVideoId] = useState('dQw4w9WgXcQ'); // Default YouTube video ID
+  const [videoId, setVideoId] = useState('8xiwyk3ouuI'); // Default YouTube video ID
   const [inputVideoId, setInputVideoId] = useState('');
   const [showTip, setShowTip] = useState(true); // State to control the tip visibility
   const playerRef = useRef(null);
