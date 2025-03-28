@@ -42,6 +42,7 @@ export default function CustomVideoPlayer() {
       // Initialize player
       const initPlayer = () => {
         // Make sure Plyr is loaded
+        // @ts-ignore - Plyr is loaded from CDN
         if (!window.Plyr) {
           console.log('Plyr not loaded yet, waiting...');
           setTimeout(initPlayer, 100);
@@ -56,6 +57,7 @@ export default function CustomVideoPlayer() {
         }
 
         // Create new Plyr instance with all controls
+        // @ts-ignore - Plyr is loaded from CDN
         const newPlayer = new window.Plyr('#player', {
           controls: getControlsConfig(),
           youtube: { 
