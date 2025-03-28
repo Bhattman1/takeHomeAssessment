@@ -337,6 +337,7 @@ export default function CustomVideoPlayer() {
         /* Position the button correctly */
         .plyr__controls .plyr__eye-toggle {
           order: 97; /* Position right before fullscreen which is 98 */
+          margin-left: 4px;
         }
         
         /* Ensure volume controls remain on the left */
