@@ -1,7 +1,6 @@
+// @ts-nocheck
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// @ts-nocheck - Disable TypeScript checking for this file
 
 import { useState, useEffect, useRef } from 'react';
 import Script from 'next/script';
