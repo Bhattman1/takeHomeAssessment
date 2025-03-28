@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
 import Script from 'next/script';
 
 export default function CustomVideoPlayer() {
@@ -9,12 +8,12 @@ export default function CustomVideoPlayer() {
   const [videoId, setVideoId] = useState('dQw4w9WgXcQ'); // Default YouTube video ID
   const [inputVideoId, setInputVideoId] = useState('');
   const playerRef = useRef(null);
+  const buttonRef = useRef(null);
   const [player, setPlayer] = useState(null);
   const [playerReady, setPlayerReady] = useState(false);
   const [scriptsLoaded, setScriptsLoaded] = useState(false);
 
-  // Get the current control configuration - keep all controls the same
-  // regardless of progress bar state (we'll hide elements with CSS instead)
+  // Always include all controls in the same order for consistent layout
   const getControlsConfig = () => {
     return [
       'play-large',
@@ -22,7 +21,7 @@ export default function CustomVideoPlayer() {
       'mute',
       'volume',
       'current-time',
-      'progress', // Always include progress in config
+      'progress',
       'captions',
       'settings',
       'pip',
@@ -81,16 +80,37 @@ export default function CustomVideoPlayer() {
   // Add the eye button once player is ready - only once
   useEffect(() => {
     if (player && playerReady) {
+      // Setup global document listener for our custom button (delegated approach)
+      const documentClickHandler = (e) => {
+        const clickedButton = e.target.closest('.plyr__eye-toggle, #plyr-eye-toggle-btn');
+        if (clickedButton) {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleProgressBar(e);
+          return false;
+        }
+      };
+      
+      // Add global click handler
+      document.addEventListener('click', documentClickHandler);
+      
       // Add the custom button on initial load
       const setupEyeButton = () => {
         addCustomButton();
         
         // Apply initial visibility state to progress bar and time
-        updateProgressVisibility(showProgressBar);
+        setTimeout(() => {
+          updateProgressVisibility(showProgressBar);
+        }, 100);
       };
       
       // Delay to ensure controls are ready
       setTimeout(setupEyeButton, 500);
+      
+      // Cleanup function to remove event listener when component unmounts
+      return () => {
+        document.removeEventListener('click', documentClickHandler);
+      };
     }
   }, [playerReady]);
 
@@ -109,27 +129,39 @@ export default function CustomVideoPlayer() {
   const updateEyeButtonIcon = (showProgress) => {
     const eyeButton = document.querySelector('.plyr__eye-toggle');
     if (eyeButton) {
-      const eyeOpenSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
-      const eyeClosedSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>`;
+      // Using Material Design style icons
+      const eyeOpenSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M12 9a3 3 0 0 1 3 3a3 3 0 0 1-3 3a3 3 0 0 1-3-3a3 3 0 0 1 3-3m0-4.5c5 0 9.27 3.11 11 7.5c-1.73 4.39-6 7.5-11 7.5S2.73 16.39 1 12c1.73-4.39 6-7.5 11-7.5M3.18 12a9.821 9.821 0 0 0 17.64 0a9.821 9.821 0 0 0-17.64 0Z"/></svg>`;
+      const eyeClosedSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M2 5.27L3.28 4L20 20.72L18.73 22l-3.08-3.08c-1.15.38-2.37.58-3.65.58c-5 0-9.27-3.11-11-7.5c.69-1.76 1.79-3.31 3.19-4.54L2 5.27M12 9a3 3 0 0 1 3 3a3 3 0 0 1-.17 1L11 9.17A3 3 0 0 1 12 9m0-4.5c5 0 9.27 3.11 11 7.5a11.79 11.79 0 0 1-4 5.19l-1.42-1.43A9.862 9.862 0 0 0 20.82 12A9.821 9.821 0 0 0 12 6.5c-1.09 0-2.16.18-3.16.5L7.3 5.47c1.44-.62 3.03-.97 4.7-.97M3.18 12A9.821 9.821 0 0 0 12 17.5c.69 0 1.37-.07 2.03-.2L10.6 14c-.6-.5-1.08-1.2-1.43-1.96L7.42 10.8c-1.78 1.1-3.33 2.78-4.24 4.7Z"/></svg>`;
       eyeButton.innerHTML = showProgress ? eyeOpenSvg : eyeClosedSvg;
       eyeButton.setAttribute('aria-label', showProgress ? 'Hide progress' : 'Show progress');
     }
   };
   
-  // Update progress bar and time display visibility
+  // Update progress bar and time display visibility without affecting layout
   const updateProgressVisibility = (showProgress) => {
     if (!player || !player.elements || !player.elements.controls) return;
     
-    // Hide/show progress container
+    // We're using visibility and opacity instead of display
+    // This preserves the DOM layout and prevents controls from shifting
     const progressContainer = player.elements.controls.querySelector('.plyr__progress__container');
     if (progressContainer) {
-      progressContainer.style.display = showProgress ? 'flex' : 'none';
+      progressContainer.style.visibility = showProgress ? 'visible' : 'hidden';
+      progressContainer.style.opacity = showProgress ? '1' : '0';
+      progressContainer.style.pointerEvents = showProgress ? 'auto' : 'none';
+      // Keep the space it takes up to prevent layout shifts
+      progressContainer.style.width = progressContainer.style.width || progressContainer.offsetWidth + 'px';
+      progressContainer.style.minWidth = showProgress ? '' : '1px';
     }
     
-    // Also hide/show current time
+    // Same approach for time display
     const timeDisplay = player.elements.controls.querySelector('.plyr__time--current');
     if (timeDisplay) {
-      timeDisplay.style.display = showProgress ? 'block' : 'none';
+      timeDisplay.style.visibility = showProgress ? 'visible' : 'hidden';
+      timeDisplay.style.opacity = showProgress ? '1' : '0';
+      // Keep the space it takes up to prevent layout shifts
+      if (!showProgress && timeDisplay.offsetWidth > 0) {
+        timeDisplay.style.width = timeDisplay.offsetWidth + 'px';
+      }
     }
   };
 
@@ -146,7 +178,8 @@ export default function CustomVideoPlayer() {
     
     // Check if button already exists to avoid duplicates
     if (document.querySelector('.plyr__eye-toggle')) {
-      console.log('Eye button already exists, not adding another');
+      console.log('Eye button already exists, updating reference');
+      buttonRef.current = document.querySelector('.plyr__eye-toggle');
       return;
     }
     
@@ -154,16 +187,17 @@ export default function CustomVideoPlayer() {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'plyr__control plyr__eye-toggle';
+    button.id = 'plyr-eye-toggle-btn';
     button.setAttribute('data-plyr', 'eye-toggle');
     button.setAttribute('aria-label', showProgressBar ? 'Hide progress' : 'Show progress');
     
-    // Add icon - using Lucide SVG directly
-    const eyeOpenSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+    // Add icon - Material Design style
+    const eyeOpenSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M12 9a3 3 0 0 1 3 3a3 3 0 0 1-3 3a3 3 0 0 1-3-3a3 3 0 0 1 3-3m0-4.5c5 0 9.27 3.11 11 7.5c-1.73 4.39-6 7.5-11 7.5S2.73 16.39 1 12c1.73-4.39 6-7.5 11-7.5M3.18 12a9.821 9.821 0 0 0 17.64 0a9.821 9.821 0 0 0-17.64 0Z"/></svg>`;
     
     button.innerHTML = eyeOpenSvg;
     
-    // Add click handler
-    button.addEventListener('click', toggleProgressBar);
+    // Store reference
+    buttonRef.current = button;
     
     // Try to insert before fullscreen button
     const fullscreenButton = controlBar.querySelector('[data-plyr="fullscreen"]');
@@ -178,7 +212,12 @@ export default function CustomVideoPlayer() {
   };
 
   // Toggle progress bar visibility
-  const toggleProgressBar = () => {
+  const toggleProgressBar = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     setShowProgressBar(prev => !prev);
   };
 
@@ -262,23 +301,98 @@ export default function CustomVideoPlayer() {
         </div>
       </div>
       
-      {/* Custom CSS to style our button like native Plyr controls */}
+      {/* Custom CSS to style our button like native Plyr controls and fix layout */}
       <style jsx global>{`
         /* Style our custom eye icon to match Plyr's controls */
         .plyr__eye-toggle svg {
           display: block;
           width: 18px;
           height: 18px;
-          fill: none;
-          stroke: currentColor;
-          stroke-width: 2;
-          stroke-linecap: round;
-          stroke-linejoin: round;
+          fill: currentColor;
         }
         
         /* Position the button correctly */
         .plyr__controls .plyr__eye-toggle {
           order: 97; /* Position right before fullscreen which is 98 */
+        }
+        
+        /* Ensure volume controls remain on the left */
+        .plyr__controls [data-plyr="mute"] {
+          order: 2;
+          margin-left: 8px !important;
+        }
+        
+        .plyr__controls .plyr__volume {
+          order: 3;
+          margin-left: 0 !important;
+        }
+        
+        /* Position play button */
+        .plyr__controls [data-plyr="play"] {
+          order: 1;
+        }
+        
+        /* Position time display */
+        .plyr__controls .plyr__time {
+          order: 4;
+          min-width: 45px; /* Ensure minimum width to preserve space */
+        }
+        
+        /* Position progress bar */
+        .plyr__controls .plyr__progress__container {
+          order: 5;
+          flex-grow: 1;
+          transition: opacity 0.2s ease;
+          /* Preserve layout with minimum width when hidden */
+          min-width: 1px;
+        }
+        
+        /* Position other controls to the right */
+        .plyr__controls [data-plyr="captions"] {
+          order: 90;
+          margin-left: auto !important; /* Push to right side */
+        }
+        
+        .plyr__controls [data-plyr="settings"] {
+          order: 91;
+        }
+        
+        .plyr__controls [data-plyr="pip"] {
+          order: 92;
+        }
+        
+        .plyr__controls [data-plyr="airplay"] {
+          order: 93;
+        }
+        
+        .plyr__controls [data-plyr="fullscreen"] {
+          order: 98;
+        }
+        
+        /* Keep flex container stable */
+        .plyr__controls {
+          display: flex !important;
+          flex-wrap: nowrap !important;
+          align-items: center !important;
+          justify-content: flex-start !important;
+          gap: 0 !important;
+        }
+        
+        /* Left controls group (to keep them together) */
+        .plyr__controls::before {
+          content: '';
+          order: 0;
+          width: 0;
+          display: none;
+        }
+        
+        /* Creates separation between left and right controls */
+        .plyr__controls::after {
+          content: '';
+          order: 89;
+          flex-grow: 0;
+          width: 0;
+          display: none;
         }
       `}</style>
     </>
