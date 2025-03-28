@@ -299,7 +299,7 @@ export default function CustomVideoPlayer() {
         </div>
         
         {/* Video Input Form */}
-        <form onSubmit={handleVideoChange} className="mt-6 flex flex-col sm:flex-row gap-2">
+        {/* <form onSubmit={handleVideoChange} className="mt-6 flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={inputVideoId}
@@ -313,7 +313,7 @@ export default function CustomVideoPlayer() {
           >
             Play Video
           </button>
-        </form>
+        </form> */}
         
         <div className="mt-4 text-center text-gray-600">
           <p>
